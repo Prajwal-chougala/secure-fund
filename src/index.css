@@ -1,0 +1,28 @@
+:root {
+  --primary-blue: #007bff;
+  --primary-dark-blue: #0056b3;
+  --secondary-green: #28a745;
+  --light-gray: #f8f9fa;
+  --dark-gray: #343a40;
+  --text-color: #495057;
+  --white: #ffffff;
+  --danger-red: #dc3545;
+}
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--light-gray);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+}

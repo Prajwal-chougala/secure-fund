@@ -1,0 +1,8 @@
+.dashboard-container { padding: 40px; max-width: 1200px; margin: auto; }
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.logout-btn { background: var(--danger-red); color: var(--white); padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
+.stats-container { display: flex; gap: 20px; margin-bottom: 2rem; }
+.stat-card { flex: 1; background: var(--white); padding: 2rem; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; }
+.actions-container { margin-bottom: 2rem; }
+.donate-now-btn { background: var(--secondary-green); color: var(--white); padding: 15px 30px; border: none; border-radius: 50px; cursor: pointer; font-size: 1.2rem; }
+.history-table { margin-top: 2rem; background: var(--white); padding: 2rem; border-radius: 10px; }

@@ -1,0 +1,80 @@
+/* Paste the original Navbar.css content, then ADD this at the end */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+  background-color: rgba(255, 255, 255, 0.8);
+  /* Cross-browser support for background blur */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); /* <-- ADDED FOR SAFARI */
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #ddd;
+  position: fixed;
+  width: 90%;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+.navbar-logo a {
+  font-size: 1.5rem; font-weight: bold; color: #333; text-decoration: none;
+}
+.navbar-links {
+  list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 2rem;
+}
+.navbar-links a {
+  text-decoration: none; color: #555; font-weight: 500; transition: color 0.3s ease;
+}
+.navbar-links a:hover {
+  color: #007bff;
+}
+.hamburger { display: none; }
+
+/* --- Dropdown Styles --- */
+.dropdown {
+  position: relative;
+}
+.dropdown-toggle {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  background-color: var(--primary-blue);
+  color: var(--white);
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+.dropdown-toggle:hover {
+  background-color: var(--primary-dark-blue);
+}
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 130%;
+  right: 0;
+  background-color: var(--white);
+  list-style: none;
+  padding: 0.5rem 0;
+  margin: 0;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  min-width: 150px;
+  z-index: 1100;
+}
+.dropdown:hover .dropdown-menu {
+  display: block; /* Show dropdown on hover */
+}
+.dropdown-menu li a {
+  display: block;
+  padding: 0.75rem 1.5rem;
+  color: var(--dark-gray);
+  white-space: nowrap;
+}
+.dropdown-menu li a:hover {
+  background-color: var(--light-gray);
+  color: var(--primary-blue);
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+  /* ... (keep your existing mobile styles here) ... */
+}

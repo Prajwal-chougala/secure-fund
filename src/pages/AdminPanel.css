@@ -1,0 +1,44 @@
+.dashboard-container { padding: 40px; max-width: 1200px; margin: auto; }
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.logout-btn { background: var(--danger-red); color: var(--white); padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; }
+
+.admin-section {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+}
+.admin-section h2 {
+  margin-top: 0;
+  color: var(--dark-gray);
+}
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.list-item:last-child {
+  border-bottom: none;
+}
+.btn-approve {
+  background-color: var(--secondary-green);
+  color: var(--white);
+  border: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.btn-action {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-right: 1rem;
+}
