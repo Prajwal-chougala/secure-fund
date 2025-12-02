@@ -22,7 +22,7 @@ function LoginPage() {
   const roleName = role.charAt(0).toUpperCase() + role.slice(1);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+   e.preventDefault();
     console.log(`--- 1. Attempting login for role: ${role} ---`); 
 
     try {
@@ -37,23 +37,30 @@ function LoginPage() {
 
       if (docSnap.exists()) {
         const userData = docSnap.data();
-        console.log(`--- 3. Found user data. Role is: ${userData.role} ---`);
+        const userRole = userData.role.toLowerCase();
+        console.log(`--- 3. Found user data. Role is: ${userRole} ---`);
         
-        // --- THIS IS THE FIX ---
-        // We compare both roles in lowercase to avoid case-sensitivity issues
-        if (userData.role.toLowerCase() !== role.toLowerCase()) {
+        // --- THIS IS THE UPDATED ROLE CHECK ---
+        
+        // Check if the user's role matches the login page they are on
+        if (userRole !== role) {
           console.error("--- 4. ROLE MISMATCH! ---"); 
-          setError(`You are trying to log in as a ${role}, but this is a ${userData.role} account.`);
+          setError(`You are trying to log in as a ${role}, but this is a ${userRole} account.`);
           setLoading(false);
           return; // Stop execution
         }
 
-        // Redirect to the correct dashboard
-        if (userData.role.toLowerCase() === 'ngo') {
+        // Redirect to the correct dashboard based on their role
+        if (userRole === 'ngo') {
           navigate('/ngo-dashboard');
+        } else if (userRole === 'beneficiary') {
+          navigate('/beneficiary-dashboard');
+        } else if (userRole === 'pendingngo') {
+          navigate('/ngo-dashboard'); // Send to NGO dash to see "Pending"
         } else {
           navigate('/donor-dashboard');
         }
+
       } else {
         console.error("--- 4. NO USER DATA FOUND IN FIRESTORE ---");
         setError('User data not found.');
@@ -66,7 +73,7 @@ function LoginPage() {
     setLoading(false);
   };
 
-  return (
+ return (
     <div className="auth-container">
       <div className="auth-card">
         <h1 className="auth-title">{roleName} Login</h1>

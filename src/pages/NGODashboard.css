@@ -11,6 +11,8 @@
   --border-gray: #dee2e6;
   --text-dark: #343a40;
   --text-light: #6c757d;
+  --status-pending: #ffc107;
+  --status-distributed: #28a745;
 }
 
 /* --- Base Layout --- */
@@ -130,17 +132,21 @@ button[type="submit"]:hover {
 /* --- Forms & Inputs --- */
 input[type="text"],
 input[type="email"],
-input[type="password"] {
+input[type="password"],
+select {
   font-family: inherit;
   font-size: 1rem;
   padding: 0.8rem;
   border: 1px solid var(--border-gray);
   border-radius: 8px;
   width: 100%;
-  box-sizing: border-box; /* Important for 100% width + padding */
+  box-sizing: border-box; 
+  background-color: var(--white);
+  color: var(--text-dark);
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus,
+select:focus {
   border-color: var(--primary-blue);
   outline: none;
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
@@ -181,38 +187,76 @@ input[type="text"]:focus {
   border-bottom: none;
 }
 
-.history-table input[type="text"] {
-  width: 95%;
-  margin-right: 5%;
+/* Inline form for distribution */
+.distribute-form-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; 
 }
 
-/* --- File Input (from your original) --- */
-input[type="file"] {
+.distribute-form-inline input[type="text"] {
+  width: 100%; 
+}
+
+.distribute-form-inline .distribute-btn {
+  width: auto; 
+  flex-shrink: 0; 
+}
+
+/* Status Indicators */
+.status-distributed,
+.status-pending {
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+.status-distributed {
+  color: var(--success-green);
+  background-color: rgba(40, 167, 69, 0.1);
+}
+.status-pending {
+  color: #a08000;
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+
+/* --- Tab Navigation Bar --- */
+.ngo-nav {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 2px solid var(--border-gray);
+  margin-bottom: 2rem;
+}
+
+.ngo-nav button {
   font-family: inherit;
-  margin-top: 1rem;
-  display: block;
-  color: var(--text-light);
-}
-
-/* Style the file input button */
-input[type="file"]::file-selector-button {
   font-weight: 600;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--primary-blue);
-  background: var(--white);
-  color: var(--primary-blue);
-  border-radius: 8px;
+  font-size: 1rem;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  background-color: transparent;
+  color: var(--text-light);
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  margin-right: 1rem;
+  margin-bottom: -2px; /* Aligns border */
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
 }
 
-input[type="file"]::file-selector-button:hover {
-  background-color: #f8f9fa;
+.ngo-nav button:hover {
+  color: var(--text-dark);
 }
 
-/* --- Error & Status --- */
-.error-message {
-  color: var(--danger-red);
-  font-weight: 500;
+.ngo-nav button.active {
+  color: var(--primary-blue);
+  border-bottom-color: var(--primary-blue);
+}
+
+/* Container for the active "page" content */
+.ngo-view-container {
+  padding: 1.5rem;
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
 }

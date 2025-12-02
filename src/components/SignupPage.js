@@ -17,7 +17,6 @@ function SignupPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // --- THIS IS THE UPDATED LOGIC ---
   // Read role from URL and default to 'donor' (lowercase)
   const role = (searchParams.get('role') || 'donor').toLowerCase();
   const roleName = role.charAt(0).toUpperCase() + role.slice(1);
@@ -42,13 +41,19 @@ function SignupPage() {
       
       console.log("--- 3. Signup finished, navigating... ---"); // <-- CHECKPOINT 3
       
+      // --- THIS IS THE FIXED REDIRECT LOGIC ---
       if (role === 'ngo') {
-        // We still send them to the NGO dashboard,
-        // where they will see the "Pending" message.
+        // Send to NGO dash to see "Pending" message
         navigate('/ngo-dashboard');
+      } else if (role === 'beneficiary') {
+        // Send to the new Beneficiary dashboard
+        navigate('/beneficiary-dashboard');
       } else {
+        // Default to donor dashboard
         navigate('/donor-dashboard');
       }
+      // --- END OF FIX ---
+
     } catch (err) {
       console.error("--- 4. CATCH BLOCK ERROR IN SIGNUPPAGE: ---", err); // <-- CHECKPOINT 4
       setError('Failed to create an account. ' + err.message);
@@ -59,7 +64,7 @@ function SignupPage() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1 className="auth-title">Create {roleName} Account</h1>
+        <h1 className="auth-title">Create {roleName.toUpperCase()} Account</h1>
         {/* Add a message for pending NGOs */}
         {role === 'ngo' && <p className="auth-subtitle" style={{color: 'var(--primary-blue)', fontWeight: '500'}}>Note: NGO accounts require admin approval before you can create campaigns.</p>}
         
