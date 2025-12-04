@@ -1,60 +1,106 @@
-/* --- Global Variables --- */
-:root {
-  --primary-blue: #007bff;
-  --primary-hover: #0056b3;
-  --danger-red: #dc3545;
-  --danger-hover: #c82333;
-  --success-green: #28a745;
-  --success-hover: #218838;
-  --white: #ffffff;
-  --bg-light-gray: #f8f9fa;
-  --border-gray: #dee2e6;
-  --text-dark: #343a40;
-  --text-light: #6c757d;
-  --status-pending: #ffc107;
-  --status-distributed: #28a745;
-}
+/* src/pages/NGODashboard.css */
 
-/* --- Base Layout --- */
+/* --- Main Layout --- */
 .dashboard-container {
-  padding: 2rem;
   max-width: 1200px;
-  margin: 2rem auto;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
 }
 
+/* --- Header Section --- */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-gray);
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
 }
 
 .dashboard-header h1 {
+  font-size: 1.8rem;
+  color: #2c3e50;
   margin: 0;
-  color: var(--text-dark);
 }
 
 .account-info {
+  font-family: monospace;
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  color: #666;
   font-size: 0.9rem;
-  color: var(--text-light);
-  margin-top: -1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
-/* --- Reusable Card Component --- */
-.card,
-.stat-card,
-.campaign-card,
-.history-table,
-.connect-wallet-container {
-  background: var(--white);
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+/* --- Buttons --- */
+.logout-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #c82333;
+}
+
+.donate-now-btn {
+  background-color: #f6851b; /* MetaMask Orange */
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.primary-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* --- Navigation Tabs --- */
+.ngo-nav {
+  display: flex;
+  gap: 10px;
   margin-bottom: 2rem;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 2px;
+}
+
+.ngo-nav button {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  color: #6c757d;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  border-bottom: 3px solid transparent;
+}
+
+.ngo-nav button:hover {
+  color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.ngo-nav button.active {
+  color: #007bff;
+  border-bottom: 3px solid #007bff;
 }
 
 /* --- Stats Cards --- */
@@ -62,201 +108,203 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
-}
-
-.stat-card h2 {
-  margin-top: 0;
-  font-size: 1.1rem;
-  color: var(--text-light);
-  font-weight: 500;
-}
-
-.stat-card p {
-  font-size: 2.2rem;
-  font-weight: 600;
-  margin: 0;
-  color: var(--primary-blue);
-}
-
-/* --- Buttons --- */
-.logout-btn,
-.donate-now-btn,
-.distribute-btn,
-button[type="submit"] {
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.logout-btn:hover,
-.donate-now-btn:hover,
-.distribute-btn:hover,
-button[type="submit"]:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Button Colors */
-.donate-now-btn,
-.create-campaign-form button[type="submit"] {
-  background-color: var(--primary-blue);
-  color: var(--white);
-}
-.donate-now-btn:hover,
-.create-campaign-form button[type="submit"]:hover {
-  background-color: var(--primary-hover);
-}
-
-.logout-btn {
-  background-color: var(--danger-red);
-  color: var(--white);
-}
-.logout-btn:hover {
-  background-color: var(--danger-hover);
-}
-
-.distribute-btn {
-  background-color: var(--success-green);
-  color: var(--white);
-  width: 100%;
-}
-.distribute-btn:hover {
-  background-color: var(--success-hover);
-}
-
-/* --- Forms & Inputs --- */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-select {
-  font-family: inherit;
-  font-size: 1rem;
-  padding: 0.8rem;
-  border: 1px solid var(--border-gray);
-  border-radius: 8px;
-  width: 100%;
-  box-sizing: border-box; 
-  background-color: var(--white);
-  color: var(--text-dark);
-}
-
-input[type="text"]:focus,
-select:focus {
-  border-color: var(--primary-blue);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-}
-
-/* Campaign Form Layout */
-.create-campaign-form {
-  display: grid;
-  gap: 1rem;
-}
-.create-campaign-form button[type="submit"] {
-  width: 100%;
-  margin-top: 0.5rem;
-}
-
-/* --- Table Styles --- */
-.history-table table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1.5rem;
-}
-
-.history-table th,
-.history-table td {
-  padding: 1rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border-gray);
-  vertical-align: middle;
-}
-
-.history-table th {
-  color: var(--text-light);
-  font-size: 0.9rem;
-  text-transform: uppercase;
-}
-
-.history-table tr:last-child td {
-  border-bottom: none;
-}
-
-/* Inline form for distribution */
-.distribute-form-inline {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem; 
-}
-
-.distribute-form-inline input[type="text"] {
-  width: 100%; 
-}
-
-.distribute-form-inline .distribute-btn {
-  width: auto; 
-  flex-shrink: 0; 
-}
-
-/* Status Indicators */
-.status-distributed,
-.status-pending {
-  font-weight: 700;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.85rem;
-}
-.status-distributed {
-  color: var(--success-green);
-  background-color: rgba(40, 167, 69, 0.1);
-}
-.status-pending {
-  color: #a08000;
-  background-color: rgba(255, 193, 7, 0.1);
-}
-
-
-/* --- Tab Navigation Bar --- */
-.ngo-nav {
-  display: flex;
-  flex-wrap: wrap;
-  border-bottom: 2px solid var(--border-gray);
   margin-bottom: 2rem;
 }
 
-.ngo-nav button {
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 0.8rem 1.5rem;
-  border: none;
-  background-color: transparent;
-  color: var(--text-light);
-  cursor: pointer;
-  margin-bottom: -2px; /* Aligns border */
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.ngo-nav button:hover {
-  color: var(--text-dark);
-}
-
-.ngo-nav button.active {
-  color: var(--primary-blue);
-  border-bottom-color: var(--primary-blue);
-}
-
-/* Container for the active "page" content */
-.ngo-view-container {
+.stat-card {
+  background: white;
   padding: 1.5rem;
-  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  text-align: center;
+}
+
+.stat-card h2 {
+  font-size: 1rem;
+  color: #6c757d;
+  margin-top: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card p {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin: 10px 0 0;
+}
+
+/* --- Tables --- */
+.history-table {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  overflow: hidden;
+  margin-bottom: 2rem;
+  padding: 1rem;
   border: 1px solid #eee;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
+}
+
+.history-table h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  color: #495057;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+}
+
+th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+}
+
+tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* --- Forms (Create Campaign) --- */
+.campaign-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.create-campaign-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.create-campaign-form input {
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.create-campaign-form button {
+  background-color: #28a745;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.create-campaign-form button:hover {
+  background-color: #218838;
+}
+
+/* --- Distribution Inputs inside Table --- */
+.table-input {
+  padding: 6px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.distribute-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.distribute-btn:hover {
+  background-color: #0056b3;
+}
+
+/* --- Application Action Buttons --- */
+.approve-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.reject-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+/* --- Status Badges --- */
+.status-success {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.status-fail {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.status-distributed {
+  background-color: #cce5ff;
+  color: #004085;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.status-pending {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+/* --- Wallet Connect Box --- */
+.connect-wallet-container {
+  text-align: center;
+  padding: 3rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  margin-top: 2rem;
+}
+
+.error-message {
+  color: red;
+  margin-top: 1rem;
 }
