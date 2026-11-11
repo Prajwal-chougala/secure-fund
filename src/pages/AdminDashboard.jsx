@@ -4,313 +4,200 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ethers } from 'ethers';
 import { contractAddress, contractABI } from '../web3Config';
-import { db } from '../firebase'; // <-- Import Firestore
-import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore'; // <-- Import Firestore functions
-import './NGODashboard.css'; 
+import { db } from '../firebase';
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import './AdminDashboard.css';
 
 const AdminDashboard = () => {
   const { userData, logout } = useAuth();
   const navigate = useNavigate();
-
-  // Web3 State (for campaign management)
-  const [account, setAccount] = useState(null);
-  const [contract, setContract] = useState(null);
-  const [allCampaigns, setAllCampaigns] = useState([]);
-  const [web3Error, setWeb3Error] = useState('');
-  const [isContractAdmin, setIsContractAdmin] = useState(false);
-
-  // Firebase State (for user management)
+  
+  // --- STATE ---
+  const [activeTab, setActiveTab] = useState('verification');
   const [pendingNGOs, setPendingNGOs] = useState([]);
-  const [approvedNGOs, setApprovedNGOs] = useState([]); // <-- NEW STATE
-  const [loadingNGOs, setLoadingNGOs] = useState(true);
-  const [firebaseError, setFirebaseError] = useState('');
+  const [allCampaigns, setAllCampaigns] = useState([]);
+  
+  // FIX: We are now using this 'loading' state in the render below
+  const [loading, setLoading] = useState(false);
 
-  // --- 1. FIREBASE DATA (Load immediately on page load) ---
-  const loadFirebaseUsers = async () => {
-    setLoadingNGOs(true);
-    setFirebaseError('');
+  // --- 1. Load Pending NGOs ---
+  const loadPendingNGOs = async () => {
+    setLoading(true);
     try {
-      const usersRef = collection(db, "users");
-
-      // Query 1: Get Pending NGOs
-      const pendingQuery = query(usersRef, where("role", "==", "PendingNGO"));
-      const pendingSnapshot = await getDocs(pendingQuery);
-      const pendingList = pendingSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setPendingNGOs(pendingList);
-
-      // Query 2: Get Approved NGOs
-      const approvedQuery = query(usersRef, where("role", "==", "NGO"));
-      const approvedSnapshot = await getDocs(approvedQuery);
-      const approvedList = approvedSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setApprovedNGOs(approvedList);
-
+      const q = query(collection(db, "users"), where("role", "==", "PendingNGO"));
+      const querySnapshot = await getDocs(q);
+      const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPendingNGOs(list);
     } catch (err) {
-      console.error("Failed to fetch user data:", err);
-      setFirebaseError("Failed to fetch user lists. Check console.");
+      console.error("Failed to load NGOs:", err);
     }
-    setLoadingNGOs(false);
+    setLoading(false);
   };
 
-  // --- This useEffect now runs on its own, without waiting for MetaMask ---
-  useEffect(() => {
-    // We only load data if we know the user is an Admin
-    if (userData?.role === 'Admin') {
-      loadFirebaseUsers();
-    }
-  }, [userData]); // Re-run if userData changes
-
-  // --- 2. HANDLE APPROVE NGO (Firebase Action) ---
-  const handleApproveNGO = async (userId) => {
-    if (window.confirm("Are you sure you want to approve this NGO?")) {
-      try {
-        const userRef = doc(db, "users", userId);
-        await updateDoc(userRef, {
-          role: "NGO" // Change role from 'PendingNGO' to 'NGO'
-        });
-        alert("NGO approved successfully!");
-        // Refresh both user lists
-        loadFirebaseUsers(); 
-      } catch (err) {
-        console.error("Failed to approve NGO:", err);
-        alert("Failed to approve NGO. See console.");
-      }
-    }
-  };
-
-
-  // --- 3. BLOCKCHAIN FUNCTIONS (Wallet Connection, Campaign Loading, etc.) ---
-  // --- All functions below this line are unchanged ---
-
-  // --- CONNECT TO METAMASK ---
-  const connectWallet = async () => {
+  // --- 2. Load ALL Campaigns ---
+  const loadAllCampaigns = async () => {
+    // We don't set global loading here to avoid flickering if switching tabs fast, 
+    // but you can add a separate loading state for campaigns if desired.
     try {
-      if (!window.ethereum) throw new Error("MetaMask not found. Please install it.");
-      
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const userAccount = await signer.getAddress();
-      const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
-
-      setAccount(userAccount);
-      setContract(contractInstance);
-      setWeb3Error('');
-    } catch (err)
-      {
-      console.error("Connection failed:", err);
-      setWeb3Error(err.message);
-    }
-  };
-
-  // --- LOAD BLOCKCHAIN DATA (Campaigns) ---
-  const loadBlockchainData = async () => {
-    if (contract && account) {
-      try {
-        // Security Check: Is the connected wallet the *contract* admin?
-        const contractAdminAddress = await contract.i_admin();
-        if (contractAdminAddress.toLowerCase() !== account.toLowerCase()) {
-          setWeb3Error("Warning: This wallet is not the contract admin. You can view campaigns but cannot deactivate them.");
-          setIsContractAdmin(false);
-        } else {
-          setIsContractAdmin(true);
-        }
-
-        // Fetch all campaigns
+        if (!window.ethereum) return;
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(contractAddress, contractABI, provider);
+        
         const campaigns = await contract.getAllCampaigns();
-        const formattedCampaigns = campaigns.map(c => ({
-          id: Number(c.id),
-          title: c.title,
-          owner: c.owner,
-          amountRaised: ethers.formatEther(c.amountRaised),
-          active: c.active
+        const formatted = campaigns.map(c => ({
+            id: Number(c.id),
+            owner: c.owner,
+            title: c.title,
+            goal: ethers.formatEther(c.goal),
+            raised: ethers.formatEther(c.amountRaised),
+            active: c.active
         }));
-        setAllCampaigns(formattedCampaigns);
-
-      } catch (err) {
-        console.error("Failed to load blockchain data:", err);
-        setWeb3Error("Failed to load blockchain data.");
-      }
+        setAllCampaigns(formatted);
+    } catch (err) {
+        console.error("Failed to load campaigns:", err);
     }
   };
 
-  // --- This useEffect only handles blockchain data ---
   useEffect(() => {
-    if (account && contract) {
-      loadBlockchainData();
+    if (userData?.role !== 'admin') {
+       // navigate('/login'); 
     }
-  }, [contract, account]);
+    loadPendingNGOs();
+    loadAllCampaigns();
+  }, [userData]); // Removed navigate dependency to prevent loops
 
-  // --- HANDLE DEACTIVATE CAMPAIGN (Blockchain Action) ---
-  const handleDeactivate = async (campaignId) => {
-    if (!isContractAdmin) {
-      alert("Error: Your connected wallet is not the contract admin.");
-      return;
-    }
-
-    if (window.confirm("Are you sure you want to deactivate this campaign? This action cannot be undone.")) {
-      try {
-        const tx = await contract.deactivateCampaign(campaignId);
-        alert("Deactivating campaign... Please wait for the transaction.");
-        await tx.wait();
-        alert("Campaign deactivated successfully.");
-        loadBlockchainData(); // Refresh the list
-      } catch (err) {
-        console.error("Deactivation failed:", err);
-        alert("Deactivation failed. See console for details.");
-      }
+  // --- ACTIONS ---
+  const handleApprove = async (ngoId, name) => {
+    if (window.confirm(`Verify ${name}?`)) {
+        try {
+            await updateDoc(doc(db, "users", ngoId), { role: "NGO", isVerified: true });
+            loadPendingNGOs();
+        } catch (err) { alert("Failed."); }
     }
   };
 
-  // --- HANDLE LOGOUT ---
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error("Failed to log out:", error);
-    }
+  const handleReject = async (ngoId) => {
+     if (window.confirm("Reject application?")) {
+         try {
+             await updateDoc(doc(db, "users", ngoId), { role: "Rejected" });
+             loadPendingNGOs();
+         } catch (err) { console.error(err); }
+     }
   };
 
-  // --- RENDER THE COMPONENT ---
+  const handleLogout = async () => { try { await logout(); navigate('/login'); } catch (e) {} };
+
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>Site Admin Dashboard ({userData?.fullName})</h1>
-        <button onClick={handleLogout} className="logout-btn">Logout</button>
+    <div className="admin-container">
+      <div className="admin-header">
+        <h1>Admin Dashboard</h1>
+        <div className="header-right">
+            <span>Welcome, Administrator</span>
+            <button onClick={handleLogout} className="logout-btn">Logout</button>
+        </div>
       </div>
 
-      {/* --- SECTION 1: NGO APPROVALS (Firebase - No Wallet Needed) --- */}
-      <div className="history-table">
-        <h2>Pending NGO Approvals</h2>
-        {firebaseError && <p className="error-message">{firebaseError}</p>}
-        {loadingNGOs ? (
-          <p>Loading...</p>
-        ) : pendingNGOs.length === 0 ? (
-          <p>No NGOs pending approval.</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pendingNGOs.map(ngo => (
-                <tr key={ngo.id}>
-                  <td>{ngo.fullName}</td>
-                  <td>{ngo.email}</td>
-                  <td>
-                    <button 
-                      onClick={() => handleApproveNGO(ngo.id)}
-                      className="distribute-btn" // Re-using the green button style
-                    >
-                      Approve
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <div className="stats-panel">
+         <div className="stat-box">
+             <h3>Pending Approvals</h3>
+             <p>{pendingNGOs.length}</p>
+         </div>
+         <div className="stat-box">
+             <h3>Total Campaigns</h3>
+             <p>{allCampaigns.length}</p>
+         </div>
       </div>
 
-      {/* --- NEW SECTION: APPROVED NGOs --- */}
-      <div className="history-table">
-        <h2>Approved NGOs</h2>
-        {firebaseError && <p className="error-message">{firebaseError}</p>}
-        {loadingNGOs ? (
-          <p>Loading...</p>
-        ) : approvedNGOs.length === 0 ? (
-          <p>No NGOs have been approved yet.</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>User ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {approvedNGOs.map(ngo => (
-                <tr key={ngo.id}>
-                  <td>{ngo.fullName}</td>
-                  <td>{ngo.email}</td>
-                  <td>{ngo.id.substring(0, 15)}...</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <div className="admin-tabs">
+          <button 
+            className={activeTab === 'verification' ? 'active-tab' : ''} 
+            onClick={() => setActiveTab('verification')}
+          >
+            NGO Verification
+          </button>
+          <button 
+            className={activeTab === 'campaigns' ? 'active-tab' : ''} 
+            onClick={() => setActiveTab('campaigns')}
+          >
+            Monitor Campaigns
+          </button>
       </div>
 
-      {/* --- SECTION 3: CAMPAIGN MANAGEMENT (Blockchain - Wallet Needed) --- */}
-      <div className="history-table">
-        <h2>All Campaigns on Platform (Blockchain)</h2>
-        {!account ? (
-          <div className="connect-wallet-container" style={{padding: 0, boxShadow: 'none'}}>
-            <p>Connect your MetaMask wallet to manage campaigns.</p>
-            <button onClick={connectWallet} className="donate-now-btn">Connect MetaMask</button>
-            {web3Error && <p className="error-message">{web3Error}</p>}
-          </div>
-        ) : (
-          <>
-            <p className="account-info">Connected Wallet: {account.substring(0, 6)}...{account.substring(38)}</p>
-            {web3Error && <p className="error-message">{web3Error}</p>}
+      {/* --- TAB CONTENT: VERIFICATION --- */}
+      {activeTab === 'verification' && (
+        <div className="verification-section">
+            <h2>NGO Verification Queue</h2>
             
-            {allCampaigns.length === 0 ? (
-              <p>No campaigns found.</p>
+            {/* FIX: NOW USING THE LOADING STATE HERE */}
+            {loading ? (
+                <p>Loading pending requests...</p>
             ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Title</th>
-                    <th>Status</th>
-                    <th>Raised</th>
-                    <th>NGO Owner</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allCampaigns.map(campaign => (
-                    <tr key={campaign.id}>
-                      <td>{campaign.id}</td>
-                      <td>{campaign.title}</td>
-                      <td>
-                        <span className={campaign.active ? 'status-distributed' : 'status-pending'}>
-                          {campaign.active ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-                      <td>{campaign.amountRaised} ETH</td>
-                      <td>{campaign.owner.substring(0, 10)}...</td>
-                      <td>
-                        {campaign.active && (
-                          <button 
-                            onClick={() => handleDeactivate(campaign.id)} 
-                            className="distribute-btn"
-                            disabled={!isContractAdmin}
-                            style={{backgroundColor: 'var(--danger-red)'}} // Use red for deactivate
-                          >
-                            Deactivate
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                <>
+                    {pendingNGOs.length === 0 ? (
+                        <div className="empty-state">No pending requests.</div>
+                    ) : (
+                        <table className="admin-table">
+                            <thead>
+                                <tr><th>Name</th><th>Email</th><th>Wallet</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                {pendingNGOs.map(ngo => (
+                                    <tr key={ngo.id}>
+                                        <td>{ngo.fullName}</td>
+                                        <td>{ngo.email}</td>
+                                        <td><span className="wallet-font">{ngo.walletAddress || "N/A"}</span></td>
+                                        <td>
+                                            <button className="btn-approve" onClick={() => handleApprove(ngo.id, ngo.fullName)}>Approve</button>
+                                            <button className="btn-reject" onClick={() => handleReject(ngo.id)}>Reject</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </>
             )}
-          </>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* --- TAB CONTENT: CAMPAIGNS --- */}
+      {activeTab === 'campaigns' && (
+        <div className="verification-section">
+            <h2>Platform Campaigns (Blockchain Data)</h2>
+            {allCampaigns.length === 0 ? <div className="empty-state">No campaigns created yet.</div> : (
+                <table className="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Owner (NGO)</th>
+                            <th>Raised / Goal</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {allCampaigns.map(camp => (
+                            <tr key={camp.id}>
+                                <td>{camp.id}</td>
+                                <td>{camp.title}</td>
+                                <td><span className="wallet-font">{camp.owner.substring(0,8)}...</span></td>
+                                <td>{camp.raised} / {camp.goal} ETH</td>
+                                <td>
+                                    <span style={{
+                                        color: camp.active ? 'green' : 'red', 
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {camp.active ? "Active" : "Inactive"}
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
+        </div>
+      )}
+
     </div>
   );
 };

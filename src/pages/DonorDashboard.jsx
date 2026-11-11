@@ -21,7 +21,6 @@ const DonorDashboard = () => {
   const [error, setError] = useState('');
   
   // --- UI State ---
-  // FIX: Removed 'provider' state to solve "no-unused-vars" warning
   const [balance, setBalance] = useState("0"); 
   const [ngoNameMap, setNgoNameMap] = useState(new Map());
   const [explorerUrl, setExplorerUrl] = useState(""); 
@@ -33,7 +32,6 @@ const DonorDashboard = () => {
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("role", "==", "NGO"));
       const querySnapshot = await getDocs(q);
-      
       const nameMap = new Map();
       querySnapshot.forEach(doc => {
         const data = doc.data();
@@ -47,18 +45,14 @@ const DonorDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    loadNgoNames();
-  }, []);
+  useEffect(() => { loadNgoNames(); }, []);
 
   // --- 2. Connect Wallet ---
   const connectWallet = async () => {
     try {
       if (!window.ethereum) throw new Error("MetaMask not found.");
       
-      // We use a local variable for provider here, we don't need to save it to state
       const provider = new ethers.BrowserProvider(window.ethereum);
-      
       const signer = await provider.getSigner();
       const userAccount = await signer.getAddress();
       const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
@@ -76,7 +70,6 @@ const DonorDashboard = () => {
       } else {
         setExplorerUrl(""); 
       }
-
     } catch (err) {
       console.error("Connection failed:", err);
       setError(err.message);
@@ -87,7 +80,7 @@ const DonorDashboard = () => {
   const loadBlockchainData = useCallback(async (currentNgoMap) => { 
     if (contract && account) { 
       try {
-        // A. Fetch Donation Receipts
+        // A. Fetch Donation Receipts (Your Tx)
         const donationTxMap = new Map();
         try {
             const donateFilter = contract.filters.DonationReceived(null, null, account);
@@ -97,15 +90,18 @@ const DonorDashboard = () => {
             });
         } catch (e) { console.warn("Donation Event Error:", e); }
 
-        // B. Fetch Distribution Events
-        const distMap = new Map();
+        // B. Fetch Distribution Events (NGO's Tx)
+        const distDataMap = new Map(); // Changed to map to an Object, not just address
         try {
            const distFilter = contract.filters.FundsDistributed(); 
-           // Safety check for the filter
            if(distFilter) {
                const distEvents = await contract.queryFilter(distFilter);
                distEvents.forEach(event => {
-                 distMap.set(Number(event.args.donationId), event.args.beneficiary);
+                 // Store BOTH the Beneficiary Address AND the Transaction Hash
+                 distDataMap.set(Number(event.args.donationId), {
+                    beneficiary: event.args.beneficiary,
+                    txHash: event.transactionHash
+                 });
                });
            }
         } catch (e) { console.warn("Distribution Event Error:", e); }
@@ -143,8 +139,8 @@ const DonorDashboard = () => {
           if (percentage > 0 && percentage < 99.9) statusString = "Partial";
           if (percentage >= 99.9) statusString = "Completed";
 
-          // Determine Beneficiary
-          const lastBeneficiary = distMap.get(donationId);
+          // Get Distribution Data
+          const distData = distDataMap.get(donationId);
           
           return {
             id: donationId,
@@ -153,16 +149,19 @@ const DonorDashboard = () => {
             amountUsed: usedAmount,
             percentage: percentage.toFixed(0),
             status: statusString,
-            beneficiaryAddress: lastBeneficiary, 
-            donationTxHash: donationTxMap.get(donationId) 
+            
+            // Beneficiary Details
+            beneficiaryAddress: distData ? distData.beneficiary : null,
+            
+            // Transaction Hashes
+            donationTxHash: donationTxMap.get(donationId), // My Tx
+            distributionTxHash: distData ? distData.txHash : null // NGO Tx
           };
         });
 
-        // Sort: Newest First
         formattedHistory.sort((a, b) => b.id - a.id);
         setMyDonations(formattedHistory);
         
-        // Stats
         let total = 0;
         formattedHistory.forEach(d => total += d.amount);
         const supported = new Set(formattedHistory.map(d => d.campaignId)).size;
@@ -186,7 +185,6 @@ const DonorDashboard = () => {
     e.preventDefault();
     const amount = e.target.amount.value;
     if (!amount || parseFloat(amount) <= 0) return alert("Enter valid amount");
-    
     setLoadingCampaignId(campaignId); 
     try {
       const amountInWei = ethers.parseEther(amount);
@@ -202,9 +200,7 @@ const DonorDashboard = () => {
     setLoadingCampaignId(null); 
   };
 
-  const handleLogout = async () => {
-    try { await logout(); navigate('/login'); } catch (e) {}
-  };
+  const handleLogout = async () => { try { await logout(); navigate('/login'); } catch (e) {} };
 
   // --- 5. Split Lists ---
   const activeDonations = myDonations.filter(d => d.status !== "Completed");
@@ -265,8 +261,7 @@ const DonorDashboard = () => {
                     <th>Amount</th>
                     <th>Status</th>
                     <th>Progress</th>
-                    <th>Beneficiary</th>
-                    <th>Receipt</th>
+                    <th>My Receipt (In)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -286,14 +281,9 @@ const DonorDashboard = () => {
                         </div>
                       </td>
                       <td>
-                        {donation.beneficiaryAddress ? (
-                             <span className="addr-text">{donation.beneficiaryAddress.substring(0,6)}...</span>
-                        ) : "Pooling..."}
-                      </td>
-                      <td>
                         {donation.donationTxHash ? (
                           <a href={`${explorerUrl}tx/${donation.donationTxHash}`} target="_blank" rel="noopener noreferrer" className="tx-link">
-                            View ↗
+                            View Receipt ↗
                           </a>
                         ) : "-"}
                       </td>
@@ -304,7 +294,7 @@ const DonorDashboard = () => {
             )}
           </div>
 
-          {/* TABLE 2: COMPLETED */}
+          {/* TABLE 2: COMPLETED (WITH INTERNAL TX COLUMN) */}
           <div className="history-table" style={{ marginTop: '2rem' }}>
             <h2 style={{ color: '#155724' }}>✅ Completed Distributions</h2>
             {completedDonations.length === 0 ? <p>No completed donations.</p> : (
@@ -313,9 +303,9 @@ const DonorDashboard = () => {
                   <tr>
                     <th>Sr.</th> 
                     <th>Amount</th>
-                    <th>Status</th>
-                    <th>Beneficiary Address</th>
-                    <th>Internal Tx Proof</th>
+                    <th>Beneficiary</th>
+                    <th>My Receipt (In)</th>
+                    <th>Internal Transfer (Out)</th> {/* NEW COLUMN */}
                   </tr>
                 </thead>
                 <tbody>
@@ -323,29 +313,42 @@ const DonorDashboard = () => {
                     <tr key={donation.id}>
                       <td>{index + 1}</td>
                       <td>{donation.amount} ETH</td>
-                      <td><span className="status-badge status-completed">Completed</span></td>
                       
+                      {/* BENEFICIARY */}
                       <td>
                         {donation.beneficiaryAddress ? (
                             <span className="addr-text" title={donation.beneficiaryAddress}>
-                                {donation.beneficiaryAddress}
+                                {donation.beneficiaryAddress.substring(0,6)}...
                             </span>
                         ) : (
-                            <span className="text-muted">Not Found</span>
+                            <span className="text-muted">Loading...</span>
                         )}
                       </td>
                       
+                      {/* LINK 1: My Donation */}
                       <td>
-                        {donation.beneficiaryAddress ? (
+                        {donation.donationTxHash ? (
+                          <a href={`${explorerUrl}tx/${donation.donationTxHash}`} target="_blank" rel="noopener noreferrer" className="tx-link">
+                            View Donation ↗
+                          </a>
+                        ) : "-"}
+                      </td>
+
+                      {/* LINK 2: Internal Transfer (NEW) */}
+                      <td>
+                        {donation.distributionTxHash ? (
                           <a 
-                            href={`${explorerUrl}address/${donation.beneficiaryAddress}#internaltx`} 
+                            // We use the Distribution Hash (NGO's Action) directly
+                            href={`${explorerUrl}tx/${donation.distributionTxHash}#internal`} 
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className="tx-link-success"
                           >
-                             Verify on Etherscan ↗
+                             View Internal Tx ↗
                           </a>
-                        ) : "-"}
+                        ) : (
+                          <span className="text-muted">Pending Link</span>
+                        )}
                       </td>
                     </tr>
                   ))}
